@@ -9,7 +9,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
           let mockV3Aggregator
           let deployer
           const sendValue = ethers.utils.parseEther("1")
-          
+
           beforeEach(async () => {
               // const accounts = await ethers.getSigners()
               // deployer = accounts[0]
@@ -56,6 +56,36 @@ const { developmentChains } = require("../../helper-hardhat-config")
               beforeEach(async () => {
                   await fundMe.fund({ value: sendValue })
               })
+              it("withdraws ETH from a single funder", async () => {
+                  // Arrange
+                  const startingFundMeBalance =
+                      await fundMe.provider.getBalance(fundMe.address)
+                  const startingDeployerBalance =
+                      await fundMe.provider.getBalance(deployer)
+
+                  // Act
+                  const transactionResponse = await fundMe.withdraw()
+                  const transactionReceipt = await transactionResponse.wait()
+                  const { gasUsed, effectiveGasPrice } = transactionReceipt
+                  const gasCost = gasUsed.mul(effectiveGasPrice)
+
+                  const endingFundMeBalance = await fundMe.provider.getBalance(
+                      fundMe.address
+                  )
+                  const endingDeployerBalance =
+                      await fundMe.provider.getBalance(deployer)
+
+                  // Assert
+                  // Maybe clean up to understand the testing
+                  assert.equal(endingFundMeBalance, 0)
+                  assert.equal(
+                      startingFundMeBalance
+                          .add(startingDeployerBalance)
+                          .toString(),
+                      endingDeployerBalance.add(gasCost).toString()
+                  )
+              })
+
               it("withdraws ETH from a single funder", async () => {
                   // Arrange
                   const startingFundMeBalance =
@@ -144,5 +174,34 @@ const { developmentChains } = require("../../helper-hardhat-config")
                       fundMeConnectedContract.withdraw()
                   ).to.be.revertedWith("FundMe__NotOwner")
               })
+              it("Cheaper withdraw testing", async () => {
+                // Arrange
+                const startingFundMeBalance =
+                    await fundMe.provider.getBalance(fundMe.address)
+                const startingDeployerBalance =
+                    await fundMe.provider.getBalance(deployer)
+
+                // Act
+                const transactionResponse = await fundMe.cheaperWithdraw()
+                const transactionReceipt = await transactionResponse.wait()
+                const { gasUsed, effectiveGasPrice } = transactionReceipt
+                const gasCost = gasUsed.mul(effectiveGasPrice)
+
+                const endingFundMeBalance = await fundMe.provider.getBalance(
+                    fundMe.address
+                )
+                const endingDeployerBalance =
+                    await fundMe.provider.getBalance(deployer)
+
+                // Assert
+                // Maybe clean up to understand the testing
+                assert.equal(endingFundMeBalance, 0)
+                assert.equal(
+                    startingFundMeBalance
+                        .add(startingDeployerBalance)
+                        .toString(),
+                    endingDeployerBalance.add(gasCost).toString()
+                )
+            })
           })
       })

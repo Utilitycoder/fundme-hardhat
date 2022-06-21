@@ -1,4 +1,7 @@
 {
+  "name": "hardhat fund me",
+  "author": "Lawal Babatunde",
+  "version": "1.0.0",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
     "@nomiclabs/hardhat-etherscan": "^3.0.0",

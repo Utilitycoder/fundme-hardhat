@@ -74,7 +74,7 @@ contract FundMe {
         (bool success, ) = i_owner.call{value: address(this).balance}("");
         require(success);
     }
-
+    // Instead of looping through the storage variable s_funders, we will read it once and then save it in a memory variable. We can then manipulate the data from the variable to save gas.
     function cheaperWithdraw() public payable onlyOwner {
         address[] memory funders = s_funders;
         // mappings can't be in memory, sorry!

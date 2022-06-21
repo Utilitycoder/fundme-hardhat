@@ -12,7 +12,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         const ethUsdAggregator = await deployments.get("MockV3Aggregator")
         ethUsdPriceFeedAddress = ethUsdAggregator.address
     } else {
-        ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"]
+        ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"] //Select a corresponding priceFeed and Chain Id
     }
     log("----------------------------------------------------")
     log("Deploying FundMe and waiting for confirmations...")
