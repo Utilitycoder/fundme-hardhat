@@ -1,5 +1,8 @@
 {
   "name": "hardhat-typescript",
+  "scripts": {
+    "test-staging": "hardhat test test/staging/FundMe.staging.test.ts"
+  },
   "devDependencies": {
     "@chainlink/contracts": "^0.4.1",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",

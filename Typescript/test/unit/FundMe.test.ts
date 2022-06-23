@@ -1,44 +1,49 @@
+//Import dependencies
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { assert, expect } from "chai"
 import { network, deployments, ethers } from "hardhat"
 import { developmentChains } from "../../helper-hardhat-config"
 import { FundMe, MockV3Aggregator } from "../../typechain"
 
+//Start script
 describe("FundMe", function () {
   let fundMe: FundMe
   let mockV3Aggregator: MockV3Aggregator
   let deployer: SignerWithAddress
+  let addr1: SignerWithAddress, addr2: SignerWithAddress, addr3: SignerWithAddress
+  
+  //run a test before each unit test
   beforeEach(async () => {
     if (!developmentChains.includes(network.name)) {
       throw "You need to be on a development chain to run tests"
-    }
-    const accounts = await ethers.getSigners()
-    deployer = accounts[0]
+    } // => We must be on development chain
+    
+    [deployer, addr1, addr2, addr3] = await ethers.getSigners() //get signers from ethers. It's usually an array
+    // deployer = accounts[0] //assigning the first index of getSigners array.
+    
     await deployments.fixture(["all"])
-    fundMe = await ethers.getContract("FundMe")
-    mockV3Aggregator = await ethers.getContract("MockV3Aggregator")
+    fundMe = await ethers.getContract("FundMe") //Instantiate fundMe contract
+    mockV3Aggregator = await ethers.getContract("MockV3Aggregator") //Instantiate V3aggregator contract
   })
 
-  describe("constructor", function() {
+  describe("constructor", function () {
     it("sets the aggregator addresses correctly", async () => {
-      const response = await fundMe.s_priceFeed()
-      assert.equal(response, mockV3Aggregator.address)
+      const response = await fundMe.s_priceFeed() //call s_priceFeed state variable
+      assert.equal(response, mockV3Aggregator.address) //compare the response with MockV3aggregator address
     })
   })
 
-  describe("fund", function() {
+  describe("fund", function () {
     // https://ethereum-waffle.readthedocs.io/en/latest/matchers.html
     // could also do assert.fail
     it("Fails if you don't send enough ETH", async () => {
-      await expect(fundMe.fund()).to.be.revertedWith(
-        "You need to spend more ETH!"
-      )
+      await expect(fundMe.fund()).to.be.revertedWith("InsufficientFund()")// Fail because we didn't send any value.
     })
     // we could be even more precise here by making sure exactly $50 works
     // but this is good enough for now
     it("Updates the amount funded data structure", async () => {
       await fundMe.fund({ value: ethers.utils.parseEther("1") })
-      const response = await fundMe.s_addressToAmountFunded(deployer.address)
+      const response = await fundMe.s_addressToAmountFunded(deployer.address) //check fundme contract mapping with deployer address.
       assert.equal(response.toString(), ethers.utils.parseEther("1").toString())
     })
     it("Adds funder to array of funders", async () => {
@@ -46,8 +51,14 @@ describe("FundMe", function () {
       const response = await fundMe.s_funders(0)
       assert.equal(response, deployer.address)
     })
+    it("Allows other addresses to deposit", async () => {
+        await fundMe.connect(addr1).fund({value: ethers.utils.parseEther("1")})
+        const response = await fundMe.s_funders(0)
+        expect(response).to.equal(addr1.address)
+    })
+
   })
-  describe("withdraw", function() {
+  describe("withdraw", function () {
     beforeEach(async () => {
       await fundMe.fund({ value: ethers.utils.parseEther("1") })
     })
@@ -111,14 +122,15 @@ describe("FundMe", function () {
       // Let's comapre gas costs :)
       // const transactionResponse = await fundMe.withdraw()
       const transactionReceipt = await transactionResponse.wait()
-      const { gasUsed, effectiveGasPrice } = transactionReceipt
-      const withdrawGasCost = gasUsed.mul(effectiveGasPrice)
+      const { gasUsed, effectiveGasPrice } = transactionReceipt //destructure transaction receipt object
+      const withdrawGasCost = gasUsed.mul(effectiveGasPrice) //calculate using bignumber method
       console.log(`GasCost: ${withdrawGasCost}`)
       console.log(`GasUsed: ${gasUsed}`)
       console.log(`GasPrice: ${effectiveGasPrice}`)
       const endingFundMeBalance = await fundMe.provider.getBalance(
         fundMe.address
       )
+      console.log(endingFundMeBalance.toString())
       const endingDeployerBalance = await fundMe.provider.getBalance(
         deployer.address
       )
