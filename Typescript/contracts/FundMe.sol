@@ -4,17 +4,16 @@ pragma solidity ^0.8.0;
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./PriceConverter.sol";
 
-// Errors
-Error InsufficientFund();
 contract FundMe {
 // Types
   using PriceConverter for uint256;
 
+error InsufficientFund();
 // State Variables
   mapping(address => uint256) public s_addressToAmountFunded;
-  address[] private s_funders;
-  address private s_owner;
-  AggregatorV3Interface private s_priceFeed;
+  address[] public s_funders;
+  address public s_owner;
+  AggregatorV3Interface public s_priceFeed;
 
   constructor(address priceFeed) {
     s_priceFeed = AggregatorV3Interface(priceFeed);
